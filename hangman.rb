@@ -6,12 +6,13 @@ class Hangman
   def game
     @secret_word = words.sample
     puts @secret_word
-    i = 0
-    while i < 1 
-      @guess = gets
-      i += 1
+
+    @display = Array.new(@secret_word.length) {"_"}.join
+    3.times do
+      guess = gets
+      compare(guess)
     end
-    compare
+    
   end
 
   def words
@@ -28,16 +29,19 @@ class Hangman
     
   end
 
-  def compare
-    display = []
-    @secret_word.length.times do |i|
-      if @guess.chomp.split("")[i] == @secret_word.split("")[i]
-        display[i] = @secret_word.split("")[i]
-      else
-        display << "_"
+  def compare(guess)
+    guess = guess.chomp.split("")
+    secret_word = @secret_word.split("")
+    @display = @display.split("")
+    guess.each do |letter|
+      if secret_word.include?(letter)
+        secret_word.each_with_index do |secret_letter, i|
+          @display[i] = letter if secret_letter == letter
+        end
       end
     end
-    puts display.join
+    @display = @display.join
+    puts @display
   end
 
 end
