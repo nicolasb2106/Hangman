@@ -1,17 +1,42 @@
+require 'yaml'
+
 class Hangman
   def game
-    @secret_word = words.sample
-    # puts @secret_word
-    @display = Array.new(@secret_word.length) { '_' }.join
-    remaining_guesses = 8
-    until remaining_guesses == 0
-      @right_guess = 0
-      guess = gets.downcase
-      compare(guess)
-      remaining_guesses += @right_guess
-      remaining_guesses -= 1
+    saved_data = nil
+    puts "Drücke '1' für ein neues Spiel oder '2' zum Laden."
+    choice = gets.chomp
+
+    saved_data = load_game if choice == '2'
+
+    if saved_data
+      @secret_word = saved_data['secret_word']
+      @display = saved_data['display']
+      @remaining_guesses = saved_data['remaining_guesses']
+      puts @display
+    else
+      @secret_word = words.sample
+      @display = Array.new(@secret_word.length) { '_' }.join
+      @remaining_guesses = 8
     end
-    puts 'the secret word was: ' + @secret_word
+
+    until @remaining_guesses == 0 || !@display.include?('_')
+      @right_guess = 0
+      puts "Remaining guesses: #{@remaining_guesses}"
+      guess = gets.chomp.downcase
+
+      if guess == 'save'
+        save_game
+        return
+      end
+
+      compare(guess)
+      @remaining_guesses -= 1 unless @right_guess == 1
+    end
+    if @display.include?('_')
+      puts "You lost! The secret word was: #{@secret_word}"
+    else
+      puts "You won! The word was: #{@secret_word}"
+    end
   end
 
   private
@@ -27,7 +52,7 @@ class Hangman
   end
 
   def compare(guess)
-    guess = guess.chomp.split('')
+    guess = guess.split('')
     secret_word = @secret_word.split('')
     @display = @display.split('')
     guess.each do |letter|
@@ -40,6 +65,25 @@ class Hangman
     end
     @display = @display.join
     puts @display
+  end
+
+  def save_game
+    File.open('save_game.yaml', 'w') do |f|
+      f.write(YAML.dump({
+                          'secret_word' => @secret_word,
+                          'display' => @display,
+                          'remaining_guesses' => @remaining_guesses
+                        }))
+    end
+    puts 'Spielstand unter gesichert.'
+  end
+
+  def load_game
+    return nil unless File.exist?('save_game.yaml')
+
+    YAML.safe_load(File.read('save_game.yaml'))
+  rescue StandardError
+    nil
   end
 end
 
